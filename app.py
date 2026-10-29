@@ -2,6 +2,7 @@ import os
 import psycopg
 from psycopg.rows import dict_row
 from flask import Flask, jsonify, request
+from psycopg_pool import ConnectionPool
 
 app = Flask(__name__)
 
@@ -12,11 +13,15 @@ DB_CONFIG = {
     "dbname": os.environ["DB_NAME"],
 }
 
-def get_connection():
-    return psycopg.connect(**DB_CONFIG, row_factory=dict_row)
+pool = ConnectionPool(
+    kwargs={**DB_CONFIG, "row_factory": dict_row},
+    min_size=1,
+    max_size=5,
+    open=True,
+)
 
 def init_db():
-    with get_connection() as conn:
+    with pool.connection() as conn:
         conn.execute(
             "CREATE TABLE IF NOT EXISTS notes ("
             "id SERIAL PRIMARY KEY, "
@@ -29,14 +34,14 @@ def health():
 
 @app.route("/notes", methods=["GET"])
 def list_notes():
-    with get_connection() as conn:
+    with pool.connection() as conn:
         rows = conn.execute("SELECT id, text FROM notes ORDER BY id").fetchall()
     return jsonify(rows)
 
 @app.route("/notes", methods=["POST"])
 def add_note():
     data = request.get_json()
-    with get_connection() as conn:
+    with pool.connection() as conn:
         note = conn.execute(
             "INSERT INTO notes (text) VALUES (%s) RETURNING id, text",
             (data["text"],),
