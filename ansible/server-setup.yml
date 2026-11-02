@@ -1,0 +1,27 @@
+---
+- name: Basic RHEL server setup
+  hosts: servers
+  become: true
+  tasks:
+    - name: Update all packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+
+    - name: Install basic tools
+      ansible.builtin.dnf:
+        name:
+          - vim-enhanced
+          - git
+          - bash-completion
+        state: present
+    - name: Make sure firewalld is running and starts on boot
+      ansible.builtin.systemd_service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Make sure SELinux is in enforcing mode
+      ansible.posix.selinux:
+        policy: targeted
+        state: enforcing
