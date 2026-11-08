@@ -3,3 +3,4 @@ __pycache__
 .env
 .vscode
 ansible/inventory.ini
+ansible/group_vars/servers.yml
