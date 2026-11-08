@@ -1,0 +1,2 @@
+[servers]
+rhel-server ansible_host=SERVER_IP ansible_user=SSH_USER
